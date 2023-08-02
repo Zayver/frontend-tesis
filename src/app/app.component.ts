@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
         invert: false,
         pixelReplication: false,
         voi: {
-          windowWidth: 400,
+          windowWidth: 300,
           windowCenter: 100,
         },
         scale: 1.4,
