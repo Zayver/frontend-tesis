@@ -1,61 +1,56 @@
-import { Component, OnInit, VERSION } from '@angular/core';
-import * as cornerstone from 'cornerstone-core';
-// @ts-ignore
-import * as cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
-import * as dicomParser from 'dicom-parser';
+import { ViewChild, ElementRef, Component } from '@angular/core';
+
+import '@kitware/vtk.js/Rendering/Profiles/Geometry'
+import '@kitware/vtk.js/Rendering/Profiles/Volume'
+import vtkRenderWindowInteractor from "@kitware/vtk.js/Rendering/Core/RenderWindowInteractor";
+import vtkInteractorStyleTrackballCamera from "@kitware/vtk.js/Interaction/Style/InteractorStyleTrackballCamera";
+import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
+import vtkConeSource from '@kitware/vtk.js/Filters/Sources/ConeSource';
+import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+import vtkOpenGLRenderWindow from "@kitware/vtk.js/Rendering/OpenGL/RenderWindow";
+import vtkRenderWindow from "@kitware/vtk.js/Rendering/Core/RenderWindow";
+import vtkRenderer from '@kitware/vtk.js/Rendering/Core/Renderer';
 
 @Component({
-  selector: 'my-app',
+  selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  title = 'testMicro';
-  imageId =
-    'wadouri:https://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323563.dcm';
+export class AppComponent {
+  title = 'my-app';
 
-  ngOnInit(): void {
-    var element = document.getElementById('element');
+  @ViewChild('content', { read: ElementRef }) content!: ElementRef;
 
-    // Configure WADO Image Loader with dicomParser
-    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+  vtkRenderWindow: vtkRenderWindow | undefined;
+  openglRenderWindow: vtkOpenGLRenderWindow | undefined;
+  
 
-    cornerstoneWADOImageLoader.webWorkerManager.initialize({
-      maxWebWorkers: navigator.hardwareConcurrency || 1,
-      startWebWorkersOnDemand: false,
-      taskConfiguration: {
-        decodeTask: {
-          initializeCodecsOnStartup: true,
-          strict: false,
-        },
-      },
-    });
+  ngAfterViewInit(): void {
+    const container = this.content.nativeElement
 
-    cornerstone.enable(element!);
+    this.vtkRenderWindow = vtkRenderWindow.newInstance();
+    this.openglRenderWindow = vtkOpenGLRenderWindow.newInstance();
+    this.openglRenderWindow.setContainer(container);
+    this.openglRenderWindow.setSize(100, 100);
+    this.vtkRenderWindow.addView(this.openglRenderWindow);
+    const coneSource = vtkConeSource.newInstance();
+    const actor = vtkActor.newInstance();
+    const mapper = vtkMapper.newInstance();
+    actor.setMapper(mapper);
+    mapper.setInputConnection(coneSource.getOutputPort());
+    const renderer = vtkRenderer.newInstance();
+    this.vtkRenderWindow.addRenderer(renderer);
+    const interactor = vtkRenderWindowInteractor.newInstance();
+    interactor.setInteractorStyle(
+        vtkInteractorStyleTrackballCamera.newInstance()
+    );
+    interactor.setView(this.openglRenderWindow);
+    interactor.initialize();
+    interactor.bindEvents(container);
+    renderer.addActor(actor);
+    renderer.resetCamera();
+    this.vtkRenderWindow.render();
 
-    // Load & Display
-    cornerstone.loadImage(this.imageId).then(function (image: cornerstone.Image) {
 
-      cornerstone.displayImage(element!, image);
-
-      var viewport = {
-        invert: false,
-        pixelReplication: false,
-        voi: {
-          windowWidth: 300,
-          windowCenter: 100,
-        },
-        scale: 1.4,
-        translation: {
-          x: 0,
-          y: 0,
-        },
-      };
-
-      cornerstone.setViewport(element!, viewport);
-      cornerstone.updateImage(element!);
-    });
   }
-
 }
