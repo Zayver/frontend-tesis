@@ -1,11 +1,11 @@
-#vtkDiv {
-    width:200px;
-    height: 200px;
-  }
-
 .container{
     display: flex;
-    justify-content: 
-    center;
+    justify-content: center;
     align-items: center;
+    gap: 10px;
+    flex-direction: column;
+}
+
+p-slider{
+    width: 100px;
 }
