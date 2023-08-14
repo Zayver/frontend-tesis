@@ -145,7 +145,7 @@ export class AppComponent implements OnInit {
     }, 10)
   }
 
-  imageVisualization(image: vtkImageData, itkImage: Image) {
+  imageVisualization(image: vtkImageData) {
 
 
     image.setDirection([1, 0, 0, 0, 1, 0, 0, 0, 1]); // Establecer la dirección correcta de la imagen
@@ -227,7 +227,7 @@ export class AppComponent implements OnInit {
       const { image: itkImage, webWorker } = await readImageArrayBuffer(null, array.buffer, file.name, file.type)
       webWorker.terminate()
       const imageData = vtkITKHelper.convertItkToVtkImage(itkImage)
-      this.imageVisualization(imageData, itkImage)
+      this.imageVisualization(imageData)
     }
     reader.readAsArrayBuffer(file)
   }
