@@ -83,6 +83,7 @@ export class AppComponent implements OnInit {
     renderer.addActor(actor)
 
     renderer.resetCamera()
+
     renderWindow.render()
   }
 
@@ -144,12 +145,16 @@ export class AppComponent implements OnInit {
     }, 10)
   }
 
-  imageVisualization(image: vtkImageData) {
+  imageVisualization(image: vtkImageData, itkImage: Image) {
+
+
+    image.setDirection([1, 0, 0, 0, 1, 0, 0, 0, 1]); // Establecer la dirección correcta de la imagen
+    image.setOrigin([0, 0, 0]); // Establecer el origen correcto para la visualización
 
     this.renderWindow.addRenderer(this.renderer)
 
     this.openGlRenderWindow.setContainer(this.vtkContainer3.nativeElement)
-    this.openGlRenderWindow.setSize(400, 400)
+    this.openGlRenderWindow.setSize(500, 500)
     this.renderWindow.addView(this.openGlRenderWindow)
 
 
@@ -157,7 +162,8 @@ export class AppComponent implements OnInit {
     this.renderer.addActor(this.actor)
     this.mapper.setInputData(image)
 
-    // Interactors
+
+    // Interactor que maneja los eventos del mouse
     const style = vtkInteractorStyleManipulator.newInstance();
     const interactor = vtkRenderWindowInteractor.newInstance()
     interactor.setView(this.openGlRenderWindow)
@@ -165,6 +171,7 @@ export class AppComponent implements OnInit {
     interactor.bindEvents(this.vtkContainer3.nativeElement)
     interactor.setInteractorStyle(style)
 
+    // Interactor que maneja el estilo de la imagen (ventaneo)
     const styleImage = vtkInteractorStyleImage.newInstance();
     const imageInteractor = vtkRenderWindowInteractor.newInstance();
     imageInteractor.setView(this.openGlRenderWindow);
@@ -172,6 +179,7 @@ export class AppComponent implements OnInit {
     imageInteractor.bindEvents(this.vtkContainer3.nativeElement);
     imageInteractor.setInteractorStyle(styleImage);
 
+    //Establecer eventos en los botones del mouse
 
     const mousePanning =
       vtkMouseCameraTrackballPanManipulator.newInstance({
@@ -186,18 +194,26 @@ export class AppComponent implements OnInit {
     style.addMouseManipulator(mouseZooming);
 
 
+    //Ajustar ventana y nivel para mejorar visualización de Imágenes
 
+    const imageProperty = this.actor.getProperty();
+    const scalarRange = image.getPointData().getScalars().getRange();
+    const window = scalarRange[1] - scalarRange[0];
+    const level = (scalarRange[0] + scalarRange[1]) / 2;
+
+    imageProperty.setColorLevel(level);
+    imageProperty.setColorWindow(window);
+
+
+   // Se ajusta la camara para que las imagenes tengan la orientación adecuada
 
     const camera = this.renderer.getActiveCamera();
-    camera.setParallelProjection(true)
     camera.setOrientationWXYZ(180, 1, 0, 0)
-    camera.setPosition(0, 0, 1);
+    camera.zoom(1)
 
-    camera.modified()
 
-    this.renderer.resetCamera(image.getBounds())
+    this.renderer.resetCamera()
     this.renderWindow.render()
-
 
   }
 
@@ -211,7 +227,7 @@ export class AppComponent implements OnInit {
       const { image: itkImage, webWorker } = await readImageArrayBuffer(null, array.buffer, file.name, file.type)
       webWorker.terminate()
       const imageData = vtkITKHelper.convertItkToVtkImage(itkImage)
-      this.imageVisualization(imageData)
+      this.imageVisualization(imageData, itkImage)
     }
     reader.readAsArrayBuffer(file)
   }
