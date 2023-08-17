@@ -12,7 +12,7 @@ import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import vtkOutlineFilter from '@kitware/vtk.js/Filters/General/OutlineFilter';
 
-import { Image, readImageArrayBuffer } from 'itk-wasm'
+import { Image, readDICOMTags, readImageArrayBuffer, readImageDICOMFileSeries } from 'itk-wasm'
 import vtkITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
 import vtkImageSlice from '@kitware/vtk.js/Rendering/Core/ImageSlice';
 import vtkImageMapper from '@kitware/vtk.js/Rendering/Core/ImageMapper';
@@ -225,6 +225,8 @@ export class AppComponent implements OnInit {
       const array = new Uint8Array(arrayBuffer);
 
       const { image: itkImage, webWorker } = await readImageArrayBuffer(null, array.buffer, file.name, file.type)
+      const t = await readDICOMTags(webWorker,file)
+      const s = await readImageDICOMFileSeries(event.target.files)
       webWorker.terminate()
       const imageData = vtkITKHelper.convertItkToVtkImage(itkImage)
       this.imageVisualization(imageData, itkImage)
