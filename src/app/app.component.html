@@ -1,11 +1,9 @@
 <div class="container">
 
-  <p-slider [(ngModel)]="height" [min]="0" [max]="100" [step]="1" (onChange)="this.updateCone()"></p-slider>
-  <i>{{this.height}}</i>
-  <div #vtkContainer></div>
-
-  <div #vtkContainer2></div>
-
   <input type="file" (change)="onUpload($event)">
   <div #vtkContainer3></div>
+</div>
+
+<div class="container">
+<button pButton type="submit" (click)="executeModel()" class="p-button-raised p-button-rounded p-button-success">Ejecutar Algoritmo</button>
 </div>

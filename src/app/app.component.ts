@@ -21,6 +21,8 @@ import vtkMouseCameraTrackballZoomManipulator from '@kitware/vtk.js/Interaction/
 import vtkInteractorStyleManipulator from '@kitware/vtk.js/Interaction/Style/InteractorStyleManipulator';
 import vtkMouseCameraTrackballPanManipulator from '@kitware/vtk.js/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkInteractorStyleImage from '@kitware/vtk.js/Interaction/Style/InteractorStyleImage';
+import { RequestService } from './shared/request.service';
+import { Request } from './model/request';
 
 
 @Component({
@@ -28,7 +30,7 @@ import vtkInteractorStyleImage from '@kitware/vtk.js/Interaction/Style/Interacto
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent  {
   @ViewChild("vtkContainer", { static: true })
   vtkContainer!: ElementRef
 
@@ -38,11 +40,8 @@ export class AppComponent implements OnInit {
   @ViewChild("vtkContainer3", { static: true })
   vtkContainer3!: ElementRef
 
+  constructor(private requestService: RequestService){}
 
-  //example1
-  height = 1
-  cone = vtkConeSource.newInstance({ height: this.height })
-  interactor = vtkRenderWindowInteractor.newInstance()
 
   //ImageVisualization -- One time for Image
   renderWindow = vtkRenderWindow.newInstance()
@@ -50,100 +49,19 @@ export class AppComponent implements OnInit {
   openGlRenderWindow = vtkOpenGLRenderWindow.newInstance()
   actor = vtkImageSlice.newInstance()
   mapper = vtkImageMapper.newInstance()
+  file: File | undefined
 
-  ngOnInit(): void {
-    this.example1()
-    this.example2()
+
+  executeModel(){
+
+    this.requestService.sendRequest(new Request(100)).subscribe(image =>{
+      console.log(image)
+    })
+    this.requestService.getComplex().subscribe(complex=>{
+      console.log(complex)
+    })
   }
 
-  example1() {
-    const renderWindow = vtkRenderWindow.newInstance()
-    const renderer = vtkRenderer.newInstance()
-    renderWindow.addRenderer(renderer)
-
-    const openGlRenderWindow = vtkOpenGLRenderWindow.newInstance()
-    openGlRenderWindow.setContainer(this.vtkContainer.nativeElement)
-    //openGlRenderWindow.setSize(300, 300)
-    renderWindow.addView(openGlRenderWindow)
-
-
-    this.interactor.setView(openGlRenderWindow)
-    this.interactor.initialize()
-    this.interactor.bindEvents(this.vtkContainer.nativeElement)
-
-    const trackball = vtkInteractorStyleTrackballCamera.newInstance()
-    this.interactor.setInteractorStyle(trackball)
-
-
-    const actor = vtkActor.newInstance()
-    const mapper = vtkMapper.newInstance()
-
-    actor.setMapper(mapper)
-    mapper.setInputConnection(this.cone.getOutputPort())
-    renderer.addActor(actor)
-
-    renderer.resetCamera()
-
-    renderWindow.render()
-  }
-
-  updateCone() {
-    this.cone.setHeight(this.height / 100)
-    this.interactor.render()
-  }
-
-  example2() {
-    const renderWindow = vtkRenderWindow.newInstance()
-    const renderer = vtkRenderer.newInstance()
-    renderWindow.addRenderer(renderer)
-
-    const openGlRenderWindow = vtkOpenGLRenderWindow.newInstance()
-    openGlRenderWindow.setContainer(this.vtkContainer2.nativeElement)
-    //openGlRenderWindow.setSize(300, 300)
-    renderWindow.addView(openGlRenderWindow)
-
-    const interactor = vtkRenderWindowInteractor.newInstance()
-    interactor.setView(openGlRenderWindow)
-    interactor.initialize()
-    interactor.bindEvents(this.vtkContainer2.nativeElement)
-
-    const trackball = vtkInteractorStyleTrackballCamera.newInstance()
-    interactor.setInteractorStyle(trackball)
-
-
-    const ball = vtkSphereSource.newInstance()
-
-    const actor = vtkActor.newInstance()
-    const mapper = vtkMapper.newInstance()
-    actor.setMapper(mapper)
-
-    mapper.setInputConnection(ball.getOutputPort())
-
-    renderer.addActor(actor)
-
-
-    const outlineActor = vtkActor.newInstance()
-    const outlineMapper = vtkMapper.newInstance()
-    outlineActor.setMapper(outlineMapper)
-
-    const filter = vtkOutlineFilter.newInstance()
-
-    filter.setInputConnection(ball.getOutputPort())
-
-    outlineMapper.setInputConnection(filter.getOutputPort())
-
-
-    renderer.addActor(outlineActor)
-
-    renderer.resetCamera()
-    renderWindow.render()
-
-    setInterval(() => {
-      const camera = renderer.getActiveCamera()
-      camera.azimuth(1)
-      interactor.render()
-    }, 10)
-  }
 
   imageVisualization(image: vtkImageData, itkImage: Image) {
 
@@ -218,20 +136,20 @@ export class AppComponent implements OnInit {
   }
 
   onUpload(event: any) {
-    const file: File = event.target.files[0]
+    this.file = event.target.files[0]
     const reader = new FileReader
     reader.onload = async (iEvent: any) => {
       const arrayBuffer = iEvent.target.result;
       const array = new Uint8Array(arrayBuffer);
 
-      const { image: itkImage, webWorker } = await readImageArrayBuffer(null, array.buffer, file.name, file.type)
-      const t = await readDICOMTags(webWorker,file)
+      const { image: itkImage, webWorker } = await readImageArrayBuffer(null, array.buffer, this.file!.name, this.file!.type)
+      const t = await readDICOMTags(webWorker,this.file!)
       const s = await readImageDICOMFileSeries(event.target.files)
       webWorker.terminate()
       const imageData = vtkITKHelper.convertItkToVtkImage(itkImage)
       this.imageVisualization(imageData, itkImage)
     }
-    reader.readAsArrayBuffer(file)
+    reader.readAsArrayBuffer(this.file!)
   }
 
 }

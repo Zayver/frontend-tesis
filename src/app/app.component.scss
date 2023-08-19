@@ -4,8 +4,14 @@
     align-items: center;
     gap: 10px;
     flex-direction: column;
+    margin: 30px;
 }
 
 p-slider{
     width: 100px;
+}
+
+.p-button-success {
+  margin-top: 15px;
+  font-size: 12px;
 }

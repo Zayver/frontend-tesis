@@ -1,0 +1,7 @@
+@hostname = localhost
+@port = 8080
+@base_url = http://{{hostname}}:{{port}}
+
+GET {{base_url}}/model1-service/complex
+
+
